@@ -8605,7 +8605,7 @@ numberbox.addObserver(function (val) {
 var AMM = new _audioModuleManager2.default(new AudioContext());
 
 /** CHANNEL STRIP */
-(function (AMM) {
+(function channelStripDemo(AMM) {
 
     var channelStrip = AMM.createChannelStrip();
     var osc = AMM.createOscillator();
@@ -8654,6 +8654,71 @@ var AMM = new _audioModuleManager2.default(new AudioContext());
         channelStrip.setOutputGain(gain);
     });
     outputGainSlider.setVal(0.8);
+})(AMM);
+
+/** ENVELOPE */
+(function envelopeDoc(AMM) {
+
+    var osc = AMM.createOscillator();
+    var envelope = AMM.createEnvelope();
+    var gain = AMM.createGain();
+
+    osc.connect(envelope);
+    envelope.connect(gain);
+    gain.connect(AMM.destination);
+
+    osc.frequency.value = 220;
+    gain.gain.value = 0;
+    osc.start();
+
+    var attackGraph = new _graph2.default(".envelope .attack-graph", {
+        minXVal: 0,
+        maxXVal: 2,
+        minYVal: 0,
+        maxYVal: 1
+    });
+    attackGraph.addVertex({ x: "min", y: 0 }, { x: "max", y: 0 });
+    attackGraph.addListener(function (env) {
+        envelope.setAttackEnvelope(env);
+    });
+
+    var sustainGraph = new _graph2.default(".envelope .sustain-graph", {
+        minXVal: 0,
+        maxXVal: 1,
+        minYVal: 0,
+        maxYVal: 1
+    });
+    sustainGraph.addVertex({ x: "min", y: 0 }, { x: "max", y: 0 });
+    sustainGraph.addListener(function (env) {
+        envelope.setAttackEnvelope(env);
+    });
+
+    var releaseGraph = new _graph2.default(".envelope .release-graph", {
+        minXVal: 0,
+        maxXVal: 2,
+        minYVal: 0,
+        maxYVal: 1
+    });
+    releaseGraph.addVertex({ x: "min", y: 0 }, { x: "max", y: 0 });
+    releaseGraph.addListener(function (env) {
+        return envelope.setReleaseEnvelope(env);
+    });
+
+    var attackBtn = document.querySelector(".envelope .attack-button");
+    var releaseBtn = document.querySelector(".envelope .release-button");
+    var audioToggle = document.querySelector(".envelope .audio-toggle");
+
+    audioToggle.addEventListener("change", function (ev) {
+        gain.gain.value = ev.target.checked ? 0.5 : 0;
+    });
+
+    attackBtn.addEventListener("click", function (ev) {
+        envelope.attack();
+    });
+
+    releaseBtn.addEventListener("click", function (ev) {
+        envelope.release();
+    });
 })(AMM);
 
 /***/ })

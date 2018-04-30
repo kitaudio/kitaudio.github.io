@@ -1,6 +1,6 @@
 import AudioModuleManager from "audio_modules/core/audio-module-manager";
 import Dial from "ui/dial";
-import EnvelopeGraph from "ui/graph";
+import Graph from "ui/graph";
 import Keyboard from "ui/keyboard";
 import Multislider from "ui/multislider";
 import Dropmenu from "ui/dropmenu";
@@ -36,7 +36,7 @@ dial.setVal(300);
 /** Graph */
 let envelopeGraphContainer = document.getElementById("graph");
 let envelopeGraphDisplay = document.getElementById("graph-display");
-let envelopeGraph = new EnvelopeGraph(envelopeGraphContainer);
+let envelopeGraph = new Graph(envelopeGraphContainer);
 envelopeGraph.addObserver(function (state) {
     envelopeGraphDisplay.innerHTML = state.map((xyPair) => " [" + xyPair[0].toFixed(1) + ", " + xyPair[1].toFixed(1) + "]");
 });
@@ -137,7 +137,7 @@ numberbox.addObserver(function (val) {
 const AMM = new AudioModuleManager(new AudioContext());
 
 /** CHANNEL STRIP */
-(function(AMM) {
+(function channelStripDemo(AMM) {
 
     const channelStrip = AMM.createChannelStrip();
     const osc = AMM.createOscillator();
@@ -180,5 +180,69 @@ const AMM = new AudioModuleManager(new AudioContext());
     });
     outputGainSlider.addObserver(gain => { channelStrip.setOutputGain(gain); });
     outputGainSlider.setVal(0.8);
+
+})(AMM);
+
+/** ENVELOPE */
+(function envelopeDoc(AMM) {
+
+    let osc = AMM.createOscillator();
+    let envelope = AMM.createEnvelope();
+    let gain = AMM.createGain();
+    
+    osc.connect(envelope);
+    envelope.connect(gain);
+    gain.connect(AMM.destination);
+    
+    osc.frequency.value = 220;
+    gain.gain.value = 0;
+    osc.start();
+    
+    const attackGraph = new Graph(".envelope .attack-graph", {
+      minXVal: 0,
+      maxXVal: 2,
+      minYVal: 0,
+      maxYVal: 1
+    });
+    attackGraph.addVertex({x: "min", y: 0}, {x: "max", y: 0});
+    attackGraph.addListener(env => {
+      envelope.setAttackEnvelope(env);
+    });
+
+    const sustainGraph = new Graph(".envelope .sustain-graph", {
+        minXVal: 0,
+        maxXVal: 1,
+        minYVal: 0,
+        maxYVal: 1
+    });
+    sustainGraph.addVertex({x: "min", y: 0}, {x: "max", y: 0});
+    sustainGraph.addListener(env => {
+        envelope.setAttackEnvelope(env);
+    });
+
+    const releaseGraph = new Graph(".envelope .release-graph", {
+      minXVal: 0,
+      maxXVal: 2,
+      minYVal: 0,
+      maxYVal: 1,
+    });
+    releaseGraph.addVertex({x: "min", y: 0}, {x: "max", y: 0});
+    releaseGraph.addListener(env => envelope.setReleaseEnvelope(env));
+    
+    const attackBtn = document.querySelector(".envelope .attack-button");
+    const releaseBtn = document.querySelector(".envelope .release-button");
+    const audioToggle = document.querySelector(".envelope .audio-toggle");
+    
+    audioToggle.addEventListener("change", ev => {
+      gain.gain.value = ev.target.checked ? 0.5 : 0;
+    });
+    
+    attackBtn.addEventListener("click", ev => {
+      envelope.attack();
+    });
+    
+    releaseBtn.addEventListener("click", ev => {
+      envelope.release();
+    });
 
 })(AMM);
